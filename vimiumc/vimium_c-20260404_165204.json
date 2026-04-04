@@ -1,0 +1,32 @@
+{
+	"name": "Vimium C",
+	"@time": "4/4/2026, 4:52:04 PM",
+	"time": 1775303524952,
+	"environment": {
+		"extension": "2.12.2",
+		"platform": "linux",
+		"chromium": 146
+	},
+	"keyLayout": 2,
+	"keyMappings": [
+		"#!no-check",
+		"env yt host=\"https://www.youtube.com/*\"",
+		"map [ runKey expect={\"yt\":\"<f13>\"}",
+		"map ] runKey expect={\"yt\":\"<f14>\"}",
+		"map <f13> dispatchEvent key=\"<\" code=\"Comma\" keyCode=188 shiftKey",
+		"map <f14> dispatchEvent key=\">\" code=\"Period\" keyCode=190 shiftKey",
+		""
+	],
+	"searchEngines": [
+		"g: https://www.google.com/search?q=%s Google",
+		"aw: https://wiki.archlinux.org/index.php?search=%s ArchWiki",
+		"cpp: https://en.cppreference.com/mwiki/index.php?search=%s CppReference",
+		"yt: https://www.youtube.com/results?search_query=%s YouTube",
+		"gh: https://github.com/search?q=%s GitHub",
+		"gem: https://gemini.google.com/app?q=%s Gemini",
+		"claude: https://claude.ai/new?q=%s Claude",
+		"gpt: https://chatgpt.com/?q=%s ChatGPT",
+		""
+	],
+	"vimSync": true
+}
