@@ -10,7 +10,7 @@ vim.opt.softtabstop = 2     -- Change to 2 here if you prefer.
 vim.opt.expandtab = true
 vim.opt.termguicolors = true
 vim.opt.clipboard = "unnamedplus"
-
+vim.opt.autoread = true -- Auto-reload files if they change on disk
 -- ========================================================================== --
 --  2. BOOTSTRAP LAZY.NVIM
 -- ========================================================================== --

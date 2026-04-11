@@ -41,3 +41,4 @@ unsetopt correct
 unsetopt correct_all
 export EDITOR="nvim"
 export VISUAL="nvim"
+export OLLAMA_KEEP_ALIVE=0
