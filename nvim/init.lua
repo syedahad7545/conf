@@ -4,164 +4,179 @@
 vim.g.mapleader = " "
 vim.opt.number = true
 vim.opt.relativenumber = true
-vim.opt.tabstop = 2         -- Default is 4. Change to 2 here if you prefer.
-vim.opt.shiftwidth = 2      -- Change to 2 here if you prefer.
-vim.opt.softtabstop = 2     -- Change to 2 here if you prefer.
+vim.opt.tabstop = 2
+vim.opt.shiftwidth = 2
+vim.opt.softtabstop = 2
 vim.opt.expandtab = true
 vim.opt.termguicolors = true
-vim.opt.clipboard = "unnamedplus"
-vim.opt.autoread = true -- Auto-reload files if they change on disk
+vim.opt.clipboard = "unnamedplus" -- Sync clipboard between OS and Neovim
+vim.opt.autoread = true           -- Auto-reload files if they change on disk
+
+-- ANTIGRAVITY SETTINGS
+if vim.g.vscode then
+  vim.opt.cmdheight = 1 -- You can also try 2 if messages still occasionally overflow
+end
 -- ========================================================================== --
 --  2. BOOTSTRAP LAZY.NVIM
 -- ========================================================================== --
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.loop.fs_stat(lazypath) then
-    vim.fn.system({
-        "git",
-        "clone",
-        "--filter=blob:none",
-        "https://github.com/folke/lazy.nvim.git",
-        "--branch=stable",
-        lazypath,
-    })
+  vim.fn.system({
+    "git",
+    "clone",
+    "--filter=blob:none",
+    "https://github.com/folke/lazy.nvim.git",
+    "--branch=stable",
+    lazypath,
+  })
+end
+vim.opt.rtp:prepend(lazypath)
+
+-- ========================================================================== --
+--  3. PLUGINS SETUP
+-- ========================================================================== --
+require("lazy").setup({
+
+  -- >>> THEME: Kanagawa <<<
+  {
+    "rebelot/kanagawa.nvim",
+    lazy = false,
+    priority = 1000,
+    config = function()
+      require('kanagawa').setup({
+        theme = "wave",
+        background = { dark = "wave", light = "lotus" },
+        transparent = false, -- We handle this with our toggle
+      })
+      vim.cmd("colorscheme kanagawa")
     end
-    vim.opt.rtp:prepend(lazypath)
+  },
 
-    -- ========================================================================== --
-    --  3. PLUGINS SETUP
-    -- ========================================================================== --
-    require("lazy").setup({
+  -- >>> TREESITTER (Syntax Highlighting) <<<
+  {
+    "nvim-treesitter/nvim-treesitter",
+    build = ":TSUpdate",
+    config = function()
+      local status, configs = pcall(require, "nvim-treesitter.configs")
+      if not status then return end
 
-        -- >>> THEME: Kanagawa <<<
-        {
-            "rebelot/kanagawa.nvim",
-            lazy = false,
-            priority = 1000,
-            config = function()
-            require('kanagawa').setup({
-                theme = "wave",
-                background = { dark = "wave", light = "lotus" },
-            })
-            vim.cmd("colorscheme kanagawa")
-            end
+      configs.setup({
+        ensure_installed = { "c", "cpp", "lua", "vim", "vimdoc", "python" },
+        sync_install = false,
+        auto_install = true,
+        highlight = { enable = true },
+        indent = { enable = true },
+      })
+    end
+  },
+
+  -- >>> LSP & AUTOCOMPLETION (The Brains) <<<
+  {
+    "neovim/nvim-lspconfig",
+    dependencies = {
+      "williamboman/mason.nvim",
+      "williamboman/mason-lspconfig.nvim",
+      "hrsh7th/nvim-cmp",
+      "hrsh7th/cmp-nvim-lsp",
+      "hrsh7th/cmp-buffer",
+      "hrsh7th/cmp-path",
+      "L3MON4D3/LuaSnip",
+      "saadparwaiz1/cmp_luasnip",
+    },
+    config = function()
+      -- 1. Setup Mason
+      require("mason").setup()
+
+      -- 2. Setup Autocompletion
+      local cmp = require('cmp')
+      local luasnip = require('luasnip')
+
+      cmp.setup({
+        snippet = {
+          expand = function(args)
+            luasnip.lsp_expand(args.body)
+          end,
         },
+        mapping = cmp.mapping.preset.insert({
+          ['<C-b>'] = cmp.mapping.scroll_docs(-4),
+          ['<C-f>'] = cmp.mapping.scroll_docs(4),
+          ['<C-Space>'] = cmp.mapping.complete(),
+          ['<CR>'] = cmp.mapping.confirm({ select = true }),
+          ['<Tab>'] = cmp.mapping.select_next_item(),
+          ['<S-Tab>'] = cmp.mapping.select_prev_item(),
+        }),
+        sources = cmp.config.sources({
+          { name = 'nvim_lsp' },
+          { name = 'luasnip' },
+          { name = 'buffer' },
+        })
+      })
 
-        -- >>> TREESITTER (Syntax Highlighting) <<<
-        {
-            "nvim-treesitter/nvim-treesitter",
-            build = ":TSUpdate",
-            config = function()
-            local status, configs = pcall(require, "nvim-treesitter.configs")
-            if not status then return end
+      -- 3. Connect LSP Servers
+      local capabilities = require('cmp_nvim_lsp').default_capabilities()
 
-                configs.setup({
-                    ensure_installed = { "c", "cpp", "lua", "vim", "vimdoc", "python" },
-                    sync_install = false,
-                    auto_install = true,
-                    highlight = { enable = true },
-                    indent = { enable = true },
-                })
-                end
-        },
-
-        -- >>> LSP & AUTOCOMPLETION (The Brains) <<<
-        {
-            "neovim/nvim-lspconfig",
-            dependencies = {
-                "williamboman/mason.nvim",
-                "williamboman/mason-lspconfig.nvim",
-                "hrsh7th/nvim-cmp",
-                "hrsh7th/cmp-nvim-lsp",
-                "hrsh7th/cmp-buffer",
-                "hrsh7th/cmp-path",
-                "L3MON4D3/LuaSnip",
-                "saadparwaiz1/cmp_luasnip",
-            },
-            config = function()
-            -- 1. Setup Mason
-            require("mason").setup()
-
-            -- 2. Setup Autocompletion
-            local cmp = require('cmp')
-            local luasnip = require('luasnip')
-
-            cmp.setup({
-                snippet = {
-                    expand = function(args)
-                    luasnip.lsp_expand(args.body)
-                    end,
-                },
-                mapping = cmp.mapping.preset.insert({
-                    ['<C-b>'] = cmp.mapping.scroll_docs(-4),
-                                                    ['<C-f>'] = cmp.mapping.scroll_docs(4),
-                                                    ['<C-Space>'] = cmp.mapping.complete(),
-                                                    ['<CR>'] = cmp.mapping.confirm({ select = true }),
-                                                    ['<Tab>'] = cmp.mapping.select_next_item(),
-                                                    ['<S-Tab>'] = cmp.mapping.select_prev_item(),
-                }),
-                sources = cmp.config.sources({
-                    { name = 'nvim_lsp' },
-                    { name = 'luasnip' },
-                    { name = 'buffer' },
-                })
+      require("mason-lspconfig").setup({
+        ensure_installed = { "clangd", "lua_ls", "pyright" },
+        handlers = {
+          function(server_name)
+            require("lspconfig")[server_name].setup({
+              capabilities = capabilities
             })
+          end,
+        }
+      })
 
-            -- 3. Connect LSP Servers
-            local capabilities = require('cmp_nvim_lsp').default_capabilities()
+      -- 4. Global Keymaps
+      vim.api.nvim_create_autocmd('LspAttach', {
+        desc = 'LSP actions',
+        callback = function(event)
+          local opts = { buffer = event.buf }
+          vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
+          vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
+          vim.keymap.set('n', '<leader>r', vim.lsp.buf.rename, opts)
+          vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action, opts)
+        end,
+      })
+    end
+  },
 
-            require("mason-lspconfig").setup({
-                ensure_installed = { "clangd", "lua_ls", "pyright" },
-                handlers = {
-                    function(server_name)
-                    require("lspconfig")[server_name].setup({
-                        capabilities = capabilities
-                    })
-                    end,
-                }
-            })
+})
 
-            -- 4. Global Keymaps
-            vim.api.nvim_create_autocmd('LspAttach', {
-                desc = 'LSP actions',
-                callback = function(event)
-                local opts = { buffer = event.buf }
-                vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
-                vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
-                vim.keymap.set('n', '<leader>r', vim.lsp.buf.rename, opts)
-                vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action, opts)
-                end,
-            })
-            end
-        },
+-- ========================================================================== --
+--  4. TRANSPARENCY TOGGLE COMMAND
+-- ========================================================================== --
+local is_transparent = false
 
-    })
+local function apply_transparency()
+  local groups = {
+    "Normal", "NormalNC", "SignColumn", "NormalFloat", "FloatBorder",
+    "EndOfBuffer", "MsgArea", "Pmenu", "PmenuSel", "StatusLine", "StatusLineNC"
+  }
+  for _, group in ipairs(groups) do
+    vim.api.nvim_set_hl(0, group, { bg = "none" })
+  end
+end
 
-    -- ========================================================================== --
-    --  4. TRANSPARENCY TOGGLE COMMAND
-    -- ========================================================================== --
-    local is_transparent = false
+vim.api.nvim_create_user_command("ToggleTransparent", function()
+  if is_transparent then
+    vim.cmd("colorscheme kanagawa")
+    is_transparent = false
+    print("Transparency: OFF")
+  else
+    apply_transparency()
+    is_transparent = true
+    print("Transparency: ON")
+  end
+end, {})
 
-    vim.api.nvim_create_user_command("ToggleTransparent", function()
+-- Ensure transparency persists if the colorscheme is reloaded
+vim.api.nvim_create_autocmd("ColorScheme", {
+  callback = function()
     if is_transparent then
-        -- RESTORE: Reloading the theme resets the background
-        vim.cmd("colorscheme kanagawa")
-        is_transparent = false
-        print("Transparency: OFF")
-        else
-            -- TRANSPARENT: Force background to none
-            vim.api.nvim_set_hl(0, "Normal", { bg = "none" })
-            vim.api.nvim_set_hl(0, "NormalFloat", { bg = "none" })
-            -- Optional: Make the line number column transparent too
-            vim.api.nvim_set_hl(0, "SignColumn", { bg = "none" })
-            is_transparent = true
-            print("Transparency: ON")
-            end
-            end, {})
+      apply_transparency()
+    end
+  end,
+})
 
-    -- Optional: Keybinding (Leader + bg)
-    vim.keymap.set('n', '<leader>bg', ':ToggleTransparent<CR>', { noremap = true, silent = true })
-
-    -- Sync clipboard between OS and Neovim.
-    --  Remove this option if you want your OS clipboard to remain independent.
-    --  See `:help 'clipboard'`
-    vim.opt.clipboard = 'unnamedplus'
+-- Keybinding (Leader + bg)
+vim.keymap.set('n', '<leader>bg', ':ToggleTransparent<CR>', { noremap = true, silent = true })
